@@ -158,23 +158,23 @@ module spur_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angle
 	d = modul * teeth;											// Pitch circle diameter
 	r = d / 2;														// Pitch radius
 	alpha_stirn = atan(tan(contact_angle)/cos(helix_angle));// Bevel angle in face cut
-	db = d * cos(alpha_stirn);										// Grundkreisdurchmesser
+	db = d * cos(alpha_stirn);										// Base circle diameter
 	rb = db / 2;													// Base circle radius
 	da = (modul <1)? d + modul * 2.2 : d + modul * 2;				// tip diameter according to DIN 58400 or DIN 867
 	ra = da / 2;													// Tip circle radius
-	c =  (teeth <3)? 0 : modul/6;								// Kopfspiel
+	c =  (teeth <3)? 0 : modul/6;								// Header play
 	df = d - 2 * (modul + c);										// Base circle diameter
 	rf = df / 2;													// Foot circle radius
 	rho_ra = acos(rb/ra);											// maximum rolling angle;
 																	// Involute starts at base circle and ends at tip circle
-	rho_r = acos(rb/r);												// Abrollwinkel am Teilkreis;
+	rho_r = acos(rb/r);												// Roll angle on the pitch circle;
 																	// Roll angle on the pitch circle;
 	phi_r = grad(tan(rho_r)-radian(rho_r));							// Angle to the point of the involute on pitch circle
 	gamma = rad*width/(r*tan(90-helix_angle));				// Torsion angle for extrusion
 	a_step = rho_ra/16;											// Involute is divided into 16 pieces
 	tau = 360/teeth;												// Angle of pitch
 	
-	r_loch = (2*rf - bore_hole)/8;									// Radius der Löcher für Material-/Gewichtsersparnis
+	r_loch = (2*rf - bore_hole)/8;									// Radius of the holes für Material-/Gewichtsersparnis
 	rm = bore_hole/2+2*r_loch;										// Distance of the axes of the holes from the main axis
 	z_loch = floor(2*pi*rm/(3*r_loch));								// Number of holes for material/weight saving
 	
@@ -193,19 +193,19 @@ module spur_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angle
 						for (rot = [0:tau:360]){
 							rotate (rot){								// "teeth-mal" copy_rotn und drehen
 								polygon(concat(							// Zahn
-									[[0,0]],							// Zahnsegment beginnt und endet im Ursprung
-									[for (rho = [0:a_step:rho_ra])		// von null Grad (Grundkreis)
-																		// bis maximalen Evolventenwinkel (Kopfkreis)
-										pole2point(ev(rb,rho))],		// Erste Evolventen-Flanke
+									[[0,0]],							// Tooth segment begins and ends at the origin
+									[for (rho = [0:a_step:rho_ra])		// von null Grad (Base Circle)
+																		// up to maximum involute angle (tip circle)
+										pole2point(ev(rb,rho))],		// First involute edge
 
-									[pole2point(ev(rb,rho_ra))],		// Punkt der Evolvente auf Kopfkreis
+									[pole2point(ev(rb,rho_ra))],		// Point of involute on tip circle
 
-									[for (rho = [rho_ra:-a_step:0])	// von maximalen Evolventenwinkel (Kopfkreis)
-																		// bis null Grad (Grundkreis)
+									[for (rho = [rho_ra:-a_step:0])	// of maximum involute angle (tip circle)
+																		// to zero degrees (Base Circle)
 										pole2point([ev(rb,rho)[0], gear_width-ev(rb,rho)[1]])]
-																		// Zweite Evolventen-Flanke
-																		// (180*(1-spiel)) statt 180 Grad,
-																		// um Spiel an den Flanken zu erlauben
+																		// Second involute edge
+																		// (180*(1-play)) instead of 180 degrees,
+																		// to allow play on the flanks
 									)
 								);
 							}
@@ -215,7 +215,7 @@ module spur_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angle
 				}
 			}
 		}
-		// mit Materialersparnis
+		// with material savings
 		if (optimized) {
 			linear_extrude(height = width){
 				difference(){
@@ -236,7 +236,7 @@ module spur_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angle
 				}
 			}
 		}
-		// ohne Materialersparnis
+		// without saving material
 		else {
 			linear_extrude(height = width){
 				difference(){
@@ -248,27 +248,27 @@ module spur_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angle
 	}
 }
 
-/*  arrow_gear; verwendet das Modul "spur_gear"
-    modul = Höhe des Zahnkopfes über dem Teilkreis
+/*  arrow_gear; uses the module "spur_gear"
+    modul = Height of the tooth head above the pitch circle
     teeth = Number of wheel teeth
     width = gear_width
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
-    helix_angle = Schrägungswinkel zur Rotationsachse, Standardwert = 0° (Geradverzahnung)
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
+    helix_angle = Helix angle to the axis of rotation, standard value = 0° (straight teeth)
 	optimized = Holes to save material/weight */
 module arrow_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angle=0, optimized=true){
 
 	width = width/2;
 	d = modul * teeth;											// Pitch circle diameter
 	r = d / 2;														// Pitch radius
-	c =  (teeth <3)? 0 : modul/6;								// Kopfspiel
+	c =  (teeth <3)? 0 : modul/6;								// Header play
 
 	df = d - 2 * (modul + c);										// Base circle diameter
 	rf = df / 2;													// Foot circle radius
 
-	r_loch = (2*rf - bore_hole)/8;									// Radius der Löcher für Material-/Gewichtsersparnis
-	rm = bore_hole/2+2*r_loch;										// Abstand der Achsen der Löcher von der Hauptachse
-	z_loch = floor(2*pi*rm/(3*r_loch));								// Anzahl der Löcher für Material-/Gewichtsersparnis
+	r_loch = (2*rf - bore_hole)/8;									// Radius of the holes für Material-/Gewichtsersparnis
+	rm = bore_hole/2+2*r_loch;										// Distance of the axes of the holes from the main axis
+	z_loch = floor(2*pi*rm/(3*r_loch));								// Number of holes for material/weight savings
 	
 	optimized = (optimized && r >= width*3 && d > 2*bore_hole);		// is optimization useful?
 
@@ -280,7 +280,7 @@ module arrow_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angl
 			}
 		}
 	}
-	// mit Materialersparnis
+	// with material savings
 	if (optimized) {
 		linear_extrude(height = width*2){
 			difference(){
@@ -301,7 +301,7 @@ module arrow_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angl
 			}
 		}
 	}
-	// ohne Materialersparnis
+	// without saving material
 	else {
 		linear_extrude(height = width*2){
 			difference(){
@@ -313,14 +313,14 @@ module arrow_gear(modul, teeth, width, bore_hole, contact_angle = 20, helix_angl
 }
 
 /*	linear_rack und -Rad
-    modul = Höhe des Zahnkopfes über dem Teilkreis
+    modul = Height of the tooth head above the pitch circle
     length_stange = length der linear_rack
     teeth_rad = Number of wheel teeth
-	height_stange = Höhe der linear_rack bis zur Wälzgeraden
-    bore_hole_rad = Durchmesser der Mittelbore_hole des spur_gears
+	height_stange = Height of linear_rack bis zur Wälzgeraden
+    bore_hole_rad = Center hole diameter des spur_gears
 	width = width eines Zahns
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
-    helix_angle = Schrägungswinkel zur Rotationsachse, Standardwert = 0° (Geradverzahnung) */
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
+    helix_angle = Helix angle to the axis of rotation, standard value = 0° (straight teeth) */
 module rack_and_wheel (modul, length_stange, teeth_rad, height_stange, bore_hole_rad, width, contact_angle=20, helix_angle=0, assembled=true, optimized=true) {
 
 	abstand = assembled? modul*teeth_rad/2 : modul*teeth_rad;
@@ -332,31 +332,31 @@ module rack_and_wheel (modul, length_stange, teeth_rad, height_stange, bore_hole
 }
 
 /*	angled_inner_gear
-    modul = Höhe des Zahnkopfes über dem Teilkreis
+    modul = Height of the tooth head above the pitch circle
     teeth = Number of wheel teeth
     width = gear_width
 	randwidth = width des Randes ab Fußkreis
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
-    helix_angle = Schrägungswinkel zur Rotationsachse, Standardwert = 0° (Geradverzahnung) */
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
+    helix_angle = Helix angle to the axis of rotation, standard value = 0° (straight teeth) */
 module angled_inner_gear(modul, teeth, width, randwidth, contact_angle = 20, helix_angle = 0) {
 
 	// Dimension calculations	
-	ha = (teeth >= 20) ? 0.02 * atan((teeth/15)/pi) : 0.6;	// Verkürzungsfaktor Zahnkopfhöhe
+	ha = (teeth >= 20) ? 0.02 * atan((teeth/15)/pi) : 0.6;	// Shortening factor of tooth head height
 	d = modul * teeth;											// Pitch circle diameter
 	r = d / 2;														// Pitch radius
 	alpha_stirn = atan(tan(contact_angle)/cos(helix_angle));// Bevel angle in face cut
-	db = d * cos(alpha_stirn);										// Grundkreisdurchmesser
+	db = d * cos(alpha_stirn);										// Base circle diameter
 	rb = db / 2;													// Base circle radius
-	c = modul / 6;													// Kopfspiel
+	c = modul / 6;													// Header play
 	da = (modul <1)? d + (modul+c) * 2.2 : d + (modul+c) * 2;		// Kopfkreisdurchmesser
 	ra = da / 2;													// Tip circle radius
 	df = d - 2 * modul * ha;										// Base circle diameter
 	rf = df / 2;													// Foot circle radius
 	rho_ra = acos(rb/ra);											// maximaler Evolventenwinkel;
-																	// Evolvente beginnt auf Grundkreis und endet an Kopfkreis
+																	// Evolvente beginnt auf Base Circle und endet an Kopfkreis
 	rho_r = acos(rb/r);												// Evolventenwinkel am Teilkreis;
-																	// Evolvente beginnt auf Grundkreis und endet an Kopfkreis
+																	// Evolvente beginnt auf Base Circle und endet an Kopfkreis
 	phi_r = grad(tan(rho_r)-radian(rho_r));							// Winkel zum Punkt der Evolvente auf Teilkreis
 	gamma = rad*width/(r*tan(90-helix_angle));				// Torsionswinkel für Extrusion
 	a_step = rho_ra/16;											// Evolvente wird in 16 Stücke geteilt
@@ -375,15 +375,15 @@ module angled_inner_gear(modul, teeth, width, randwidth, contact_angle = 20, hel
 					rotate (rot) {									// "teeth-mal" copy_rotn und drehen
 						polygon( concat(
 							[[0,0]],
-							[for (rho = [0:a_step:rho_ra])			// von null Grad (Grundkreis)
+							[for (rho = [0:a_step:rho_ra])			// von null Grad (Base Circle)
 																	// bis maximaler Evolventenwinkel (Kopfkreis)
 								pole2point(ev(rb,rho))],
 							[pole2point(ev(rb,rho_ra))],
 							[for (rho = [rho_ra:-a_step:0])		// von maximaler Evolventenwinkel (Kopfkreis)
-																	// bis null Grad (Grundkreis)
+																	// to zero degrees (Base Circle)
 								pole2point([ev(rb,rho)[0], gear_width-ev(rb,rho)[1]])]
 																	// (180*(1+spiel)) statt 180,
-																	// um Spiel an den Flanken zu erlauben
+																	// to allow play on the flanks
 							)
 						);
 					}
@@ -396,13 +396,13 @@ module angled_inner_gear(modul, teeth, width, randwidth, contact_angle = 20, hel
 	
 }
 
-/*  Pfeil-angled_inner_gear; verwendet das Modul "angled_inner_gear"
+/*  Pfeil-angled_inner_gear; uses the module "angled_inner_gear"
     modul = Höhe des Zahnkopfes über dem Teilkegel
     teeth = Number of wheel teeth
     width = gear_width
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
-    helix_angle = Schrägungswinkel zur Rotationsachse, Standardwert = 0° (Geradverzahnung) */
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
+    helix_angle = Helix angle to the axis of rotation, standard value = 0° (straight teeth) */
 module arrow_inner_gear(modul, teeth, width, randwidth, contact_angle = 20, helix_angle = 0) {
 
 	width = width / 2;
@@ -421,9 +421,9 @@ module arrow_inner_gear(modul, teeth, width, randwidth, contact_angle = 20, heli
     anzahl_planeten = Anzahl der Planetenräder. Wenn null, rechnet die Funktion die Mindestanzahl aus.
     width = gear_width
 	randwidth = width des Randes ab Fußkreis
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
-    helix_angle = Schrägungswinkel zur Rotationsachse, Standardwert = 0° (Geradverzahnung)
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
+    helix_angle = Helix angle to the axis of rotation, standard value = 0° (straight teeth)
 	assembled = 
 	optimized = Holes to save material/weight bzw. Oberflächenvergößerung erzeugen, wenn Geometrie erlaubt
 	assembled = Komponenten zusammengebaut für Konstruktion oder auseinander zum 3D-Druck	*/
@@ -484,8 +484,8 @@ module planetary_gear(modul, teeth_sonne, teeth_planet, anzahl_planeten, width, 
     teeth = Number of wheel teeth
     cone_angle = (Halb)winkel des Kegels, auf dem das jeweils andere angled_inner_gear abrollt
     gear_width = width der Zähne von der Außenseite in Richtung Kegelspitze
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
 	helix_angle = Schrägungswinkel, Standardwert = 0° */
 module bevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact_angle = 20, helix_angle=0) {
 
@@ -501,7 +501,7 @@ module bevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact_angle
 	da_outside = (modul <1)? d_outside + (modul * 2.2) * cos(cone_angle): d_outside + modul * 2 * cos(cone_angle);
 	ra_outside = da_outside / 2;
 	delta_a = asin(ra_outside/rg_outside);
-	c = modul / 6;													// Kopfspiel
+	c = modul / 6;													// Header play
 	df_outside = d_outside - (modul +c) * 2 * cos(cone_angle);
 	rf_outside = df_outside / 2;
 	delta_f = asin(rf_outside/rg_outside);
@@ -592,12 +592,12 @@ module bevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact_angle
 	}
 }
 
-/*  Pfeil-bevel_gear; verwendet das Modul "bevel_gear"
-    modul = Höhe des Zahnkopfes über dem Teilkreis
+/*  Pfeil-bevel_gear; uses the module "bevel_gear"
+    modul = Height of the tooth head above the pitch circle
     teeth = Number of wheel teeth
     cone_angle, gear_width
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
     helix_angle = Schrägungswinkel, Standardwert = 0° */
 module arrow_bevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact_angle = 20, helix_angle=0){
 
@@ -609,7 +609,7 @@ module arrow_bevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact
 																// corresponds to the chord in the spherical section
 	r_outside = d_outside / 2;									// Part of sphere radius auf der Kegelgrundfläche 
 	rg_outside = r_outside/sin(cone_angle);					// Large cone radius, corresponds to the length of the cone flank
-	c = modul / 6;												// Kopfspiel
+	c = modul / 6;												// Header play
 	df_outside = d_outside - (modul +c) * 2 * cos(cone_angle);
 	rf_outside = df_outside / 2;
 	delta_f = asin(rf_outside/rg_outside);
@@ -638,12 +638,12 @@ module arrow_bevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact
 	}
 }
 
-/*  Spiral-bevel_gear; verwendet das Modul "bevel_gear"
-    modul = Höhe des Zahnkopfes über dem Teilkreis
+/*  Spiral-bevel_gear; uses the module "bevel_gear"
+    modul = Height of the tooth head above the pitch circle
     teeth = Number of wheel teeth
     height = Höhe des Zahnrads
-    bore_hole = Durchmesser der Mittelbore_hole
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+    bore_hole = Center hole diameter
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
     helix_angle = Schrägungswinkel, Standardwert = 0° */
 module spiralbevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact_angle = 20, helix_angle=30){
 
@@ -675,15 +675,15 @@ module spiralbevel_gear(modul, teeth, cone_angle, gear_width, bore_hole, contact
 	}
 }
 
-/*	cone_wheel_pair mit beliebigem axis_angle; verwendet das Modul "bevel_gear"
+/*	cone_wheel_pair mit beliebigem axis_angle; uses the module "bevel_gear"
     modul = Höhe des Zahnkopfes über dem Teilkegel; Angabe für die Aussenseite des Kegels
     teeth_rad = Number of wheel teeth am Rad
     teeth_pinion = Number of wheel teeth am Ritzel
 	axis_angle = Winkel zwischen den Achsen von Rad und Ritzel
     gear_width = width der Zähne von der Außenseite in Richtung Kegelspitze
-    bore_hole_rad = Durchmesser der Mittelbore_hole des Rads
-    bore_hole_pinion = Durchmesser der Mittelbore_holeen des Ritzels
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+    bore_hole_rad = Center hole diameter des Rads
+    bore_hole_pinion = Center hole diameteren des Ritzels
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
 	helix_angle = Schrägungswinkel, Standardwert = 0°
 	assembled = Komponenten zusammengebaut für Konstruktion oder auseinander zum 3D-Druck */
 module cone_wheel_pair(modul, teeth_rad, teeth_pinion, axis_angle=90, gear_width, bore_hole_rad, bore_hole_pinion, contact_angle=20, helix_angle=0, assembled=true){
@@ -693,7 +693,7 @@ module cone_wheel_pair(modul, teeth_rad, teeth_pinion, axis_angle=90, gear_width
 	delta_rad = atan(sin(axis_angle)/(teeth_pinion/teeth_rad+cos(axis_angle)));	// Kegelwinkel des Rads
 	delta_pinion = atan(sin(axis_angle)/(teeth_rad/teeth_pinion+cos(axis_angle)));// Kegelwingel des Ritzels
 	rg = r_rad/sin(delta_rad);								// Radius der Großkugel
-	c = modul / 6;											// Kopfspiel
+	c = modul / 6;											// Header play
 	df_pinion = pi*rg*delta_pinion/90 - 2 * (modul + c);	// Fußkegeldurchmesser auf der Großkugel 
 	rf_pinion = df_pinion / 2;								// Base cone radius on the large sphere
 	delta_f_pinion = rf_pinion/(pi*rg) * 180;				// Kopfkegelwinkel
@@ -729,15 +729,15 @@ module cone_wheel_pair(modul, teeth_rad, teeth_pinion, axis_angle=90, gear_width
 			bevel_gear(modul, teeth_pinion, delta_pinion, gear_width, bore_hole_pinion, contact_angle, -helix_angle);
  }
 
-/*	Pfeil-cone_wheel_pair mit beliebigem axis_angle; verwendet das Modul "arrow_bevel_gear"
+/*	Pfeil-cone_wheel_pair mit beliebigem axis_angle; uses the module "arrow_bevel_gear"
     modul = Höhe des Zahnkopfes über dem Teilkegel; Angabe für die Aussenseite des Kegels
     teeth_rad = Number of wheel teeth am Rad
     teeth_pinion = Number of wheel teeth am Ritzel
 	axis_angle = Winkel zwischen den Achsen von Rad und Ritzel
     gear_width = width der Zähne von der Außenseite in Richtung Kegelspitze
-    bore_hole_rad = Durchmesser der Mittelbore_hole des Rads
-    bore_hole_pinion = Durchmesser der Mittelbore_holeen des Ritzels
-    contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+    bore_hole_rad = Center hole diameter des Rads
+    bore_hole_pinion = Center hole diameteren des Ritzels
+    contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
     helix_angle = Schrägungswinkel, Standardwert = 0°
 	assembled = Komponenten zusammengebaut für Konstruktion oder auseinander zum 3D-Druck */
 module locking_wheel_pair(modul, teeth_rad, teeth_pinion, axis_angle=90, gear_width, bore_hole_rad, bore_hole_pinion, contact_angle = 20, helix_angle=10, assembled=true){
@@ -746,7 +746,7 @@ module locking_wheel_pair(modul, teeth_rad, teeth_pinion, axis_angle=90, gear_wi
 	delta_rad = atan(sin(axis_angle)/(teeth_pinion/teeth_rad+cos(axis_angle)));	// Kegelwinkel des Rads
 	delta_pinion = atan(sin(axis_angle)/(teeth_rad/teeth_pinion+cos(axis_angle)));// Kegelwingel des Ritzels
 	rg = r_rad/sin(delta_rad);								// Radius der Großkugel
-	c = modul / 6;											// Kopfspiel
+	c = modul / 6;											// Header play
 	df_pinion = pi*rg*delta_pinion/90 - 2 * (modul + c);	// Fußkegeldurchmesser auf der Großkugel 
 	rf_pinion = df_pinion / 2;								// Base cone radius on the large sphere
 	delta_f_pinion = rf_pinion/(pi*rg) * 180;				// Kopfkegelwinkel
@@ -787,14 +787,14 @@ Berechnet eine screw / archimedische Schraube.
 modul = Höhe des screwnkopfes über dem Teilzylinder
 gear_number = Anzahl der Gänge (Zähne) der screw
 length = Länge der screw
-bore_hole = Durchmesser der Mittelbore_hole
-contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+bore_hole = Center hole diameter
+contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
 pitch_angle = pitch_angle der screw, entspricht 90° minus Schrägungswinkel. Positiver pitch_angle = rechtsdrehend.
 assembled = Komponenten zusammengebaut für Konstruktion oder auseinander zum 3D-Druck */
 module screw(modul, gear_number, length, bore_hole, contact_angle=20, pitch_angle, assembled=true){
 
 	// Dimension calculations
-	c = modul / 6;												// Kopfspiel
+	c = modul / 6;												// Header play
 	r = modul*gear_number/(2*sin(pitch_angle));				// Teilzylinder-Radius
 	rf = r - modul - c;											// Fußzylinder-Radius
 	a = modul*gear_number/(90*tan(contact_angle));				// Spiralparameter
@@ -862,14 +862,14 @@ gear_number = Anzahl der Gänge (Zähne) der screw
 width = gear_width
 length = Länge der screw
 bore_hole = Diameter of the center bore_hole of the screw
-bore_hole_rad = Durchmesser der Mittelbore_hole des spur_gears
-contact_angle = contact_angle, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
+bore_hole_rad = Center hole diameter des spur_gears
+contact_angle = contact_angle, Standard value = 20° according to DIN 867. Should not be greater than 45° sein.
 pitch_angle = pitch_angle der screw, entspricht 90°-Schrägungswinkel. Positiver pitch_angle = rechtsdrehend.
 optimized = Holes to save material/weight
 assembled =  Komponenten zusammengebaut für Konstruktion oder auseinander zum 3D-Druck */
 module screw_gear_set(modul, teeth, gear_number, width, length, bore_hole, bore_hole_rad, contact_angle=20, pitch_angle, optimized=true, assembled=true){
 	
-	c = modul / 6;												// Kopfspiel
+	c = modul / 6;												// Header play
 	r_screw = modul*gear_number/(2*sin(pitch_angle));		// Teilzylinder-Radius screw
 	r_rad = modul*teeth/2;									// Part of sphere radius spur_gear
 	rf_screw = r_screw - modul - c;						// Fußzylinder-Radius
@@ -920,4 +920,4 @@ module screw_gear_set(modul, teeth, gear_number, width, length, bore_hole, bore_
 
 // screw(modul=1, gear_number=2, length=15, bore_hole=4, contact_angle=20, pitch_angle=10, assembled=true);
 
-// screw_gear_set(modul=1, teeth=30, gear_number=2, width=8, length=20, bore_hole=4, bore_hole_rad=4, contact_angle=20, pitch_angle=10, optimized=true, assembled=true);
+// screw_gear_set(modul=1, teeth=30, gear_number=2, width=8, length=20, bore_hole=4, bore_hole_rad=4, contact_angle=20, pitch_angle=10, optimized=true, assembled=true);
